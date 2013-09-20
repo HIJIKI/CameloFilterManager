@@ -1,0 +1,125 @@
+//--------------------------------------------------------------------------------------------------
+//= Uninstall.hsp
+//--------------------------------------------------------------------------------------------------
+
+	//----------------------------------------------------------------------------------------------
+	//= コンパイルオプション
+	//----------------------------------------------------------------------------------------------
+		#packopt hide			1
+		#packopt name			"uninstall"
+
+	//----------------------------------------------------------------------------------------------
+	//= 定数定義
+	//----------------------------------------------------------------------------------------------
+		#define DLL_FILE_PATH				"CameloFilter.dll"
+		#define REGIST_PATH					"regsvrex32.exe"
+
+		#enum SCR_MAIN			=0
+
+	//----------------------------------------------------------------------------------------------
+	//= モジュールインクルード / API宣言
+	//----------------------------------------------------------------------------------------------
+		#include "Module/BetterExec.hsp"
+		
+		#include "Module/hspdsc.as"
+		dsc_Init
+
+		#uselib "Shell32.dll"
+		#func IsUserAnAdmin "IsUserAnAdmin"
+
+	//----------------------------------------------------------------------------------------------
+	//= 初期化
+	//----------------------------------------------------------------------------------------------
+		//管理者権限で実行されているか確認
+		IsUserAnAdmin
+		if stat = 0 {
+			Titlebar = "Error"
+			Message = {"権限がありません。
+						アンインストールには管理者権限が必要です。
+						「管理者として実行」してください。"}
+			dialog Message, 1, Titlebar
+			end
+		}
+
+		gosub *__GetAlreadyFilterInstall
+
+		//メインウィンドウを初期化(一応)
+		screen SCR_MAIN, 1, 1, 2
+
+	//----------------------------------------------------------------------------------------------
+	//= メイン
+	//----------------------------------------------------------------------------------------------
+		if( AlreadyFilterInstall == 1 ){
+			Titlebar = "CameloFilter のアンインストール"
+			Message = {"CameloFilter をアンインストールします。
+						よろしいですか？"}
+			dialog Message, 2, Titlebar
+
+			//はい をクリックした
+			if( stat == 6 ){
+				//必要ファイルが存在するか確認
+				FailedFlag = 0
+				exist DLL_FILE_PATH
+				if( strsize == -1 ){
+					Titlebar = "ファイルが見つかりません。"
+					Message = ""+DLL_FILE_PATH+" がみつかりません。"
+					dialog Message, 1, Titlebar
+					FailedFlag = 1
+				}
+				exist REGIST_PATH
+				if( strsize == -1 ){
+					Titlebar = "ファイルが見つかりません。"
+					Message = ""+REGIST_PATH+" がみつかりません。"
+					dialog Message, 1, Titlebar
+					FailedFlag = 1
+				}
+
+				//アンインストール
+				if( FailedFlag == 0 ){
+					Execute ""+REGIST_PATH, "/su "+DLL_FILE_PATH, EXEC_HIDE
+					//アンインストールされたか確認
+					gosub *__GetAlreadyFilterInstall
+					if( AlreadyFilterInstall == 0 ){
+						Titlebar = "CameloFilter のアンインストール"
+						Message = "アンインストールが完了しました。"
+						dialog Message, 0, Titlebar
+					} else {
+						Titlebar = "CameloFilter のアンインストール"
+						Message = "アンインストールに失敗しました。"
+						dialog Message, 1, Titlebar
+					}
+				} else {
+					Titlebar = "CameloFilter のアンインストール"
+					Message = "アンインストールに失敗しました。"
+					dialog Message, 1, Titlebar
+				}
+			} else {
+				Titlebar = "CameloFilter のアンインストール"
+				Message = "アンインストールを中断します。"
+				dialog Message, 0, Titlebar
+			}
+		} else {
+			Titlebar = "CameloFilter のアンインストール"
+			Message = {"CameloFilter がインストールされていません。"}
+			dialog Message, 1, Titlebar
+		}
+
+	//----------------------------------------------------------------------------------------------
+	//= 終了
+	//----------------------------------------------------------------------------------------------
+		end
+
+	//----------------------------------------------------------------------------------------------
+	//= サブルーチン
+	//----------------------------------------------------------------------------------------------
+		//CameloFilterがインストールされているか確認
+		*__GetAlreadyFilterInstall
+			sdim DeviceList, 1024
+			dsc_GetDeviceList DeviceList
+			SearchIndex = instr(DeviceList, 0, "\n"+"CameloFilter"+"\n")
+			if( SearchIndex != -1 ){
+				AlreadyFilterInstall = 1
+			} else {
+				AlreadyFilterInstall = 0
+			}
+		return

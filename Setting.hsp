@@ -1,0 +1,119 @@
+//--------------------------------------------------------------------------------------------------
+//= Setting.hsp
+//--------------------------------------------------------------------------------------------------
+
+	#define PROGRAM_NAME		"CameloFilter の設定"
+	#define PROGRAM_VERSION		"1.0.0"
+
+	//----------------------------------------------------------------------------------------------
+	//= コンパイルオプション
+	//----------------------------------------------------------------------------------------------
+		#packopt name			"setting"
+
+	//----------------------------------------------------------------------------------------------
+	//= 定数定義
+	//----------------------------------------------------------------------------------------------
+		#define WINDOW_SIZE_W			280
+		#define WINDOW_SIZE_H			192
+
+		#define INI_FILE_NAME			"setting.ini"
+		#define INI_SECTION_NAME		"OutputResolution"
+
+		#define SETTING_SIZE_W_DEFAULT	640
+		#define SETTING_SIZE_H_DEFAULT	480
+
+		#enum SCR_MAIN					=0
+
+	//----------------------------------------------------------------------------------------------
+	//= モジュールインクルード
+	//----------------------------------------------------------------------------------------------
+		#include "Module/mod_ini.hsp"
+
+	//----------------------------------------------------------------------------------------------
+	//= 初期化
+	//----------------------------------------------------------------------------------------------
+		//iniファイルが存在するかどうか確認
+		exist ""+INI_FILE_NAME
+		//存在しなかった場合空で作成する
+		if( strsize == -1 ){
+			tmp = ""
+			notesel tmp
+			notesave ""+INI_FILE_NAME
+		}
+		//設定ファイルをロード
+		gosub *__DataLoad
+
+		//ウィンドウを初期化
+		screen SCR_MAIN, WINDOW_SIZE_W, WINDOW_SIZE_H
+		title ""+PROGRAM_NAME
+		syscolor 15: boxf
+
+	//----------------------------------------------------------------------------------------------
+	//= メイン
+	//----------------------------------------------------------------------------------------------
+		//オブジェクトの生成
+		;Width入力
+		x = 120:	y = 32
+		w = 96:		h = 24
+		pos x, y
+		objsize w, h
+		input SettingWidth
+
+		;Height入力
+		x = 120:	y = 72
+		w = 96:		h = 24
+		pos x, y
+		objsize w, h
+		input SettingHeight
+
+		;保存ボタン
+		x = 48:		y = 128
+		w = 88:		h = 32
+		pos x, y
+		objsize w, h
+		button "保存", *__SaveButton
+		
+		;キャンセルボタン
+		x = 144:	y = 128
+		w = 88:		h = 32
+		pos x, y
+		objsize w, h
+		button "キャンセル", *__CancelButton
+
+		//テキスト描画
+		color
+		font "ＭＳ Ｐゴシック", 14, 0
+		
+		;Width
+		x = 64:		y = 36
+		pos x, y
+		mes "Width"
+
+		;Height
+		x = 64:		y = 76
+		pos x, y
+		mes "Height"
+
+		stop
+
+	//----------------------------------------------------------------------------------------------
+	//= サブルーチン
+	//----------------------------------------------------------------------------------------------
+		*__SaveButton
+			gosub *__DataSave
+		end
+
+		*__CancelButton
+		end
+
+		*__DataLoad
+			INIInit INI_FILE_NAME
+			if( INIGet(INI_SECTION_NAME, "Width") )		{ SettingWidth = refstr }	else { SettingWidth = ""+SETTING_SIZE_W_DEFAULT }
+			if( INIGet(INI_SECTION_NAME, "Height") )	{ SettingHeight = refstr }	else { SettingHeight = ""+SETTING_SIZE_H_DEFAULT }
+		return
+
+		*__DataSave
+			INIInit INI_FILE_NAME
+			INISet INI_SECTION_NAME, "Width",	""+SettingWidth
+			INISet INI_SECTION_NAME, "Height",	""+SettingHeight
+		return

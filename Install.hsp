@@ -1,0 +1,136 @@
+//--------------------------------------------------------------------------------------------------
+//= Install.hsp
+//--------------------------------------------------------------------------------------------------
+
+	//----------------------------------------------------------------------------------------------
+	//= コンパイルオプション
+	//----------------------------------------------------------------------------------------------
+		#packopt hide			1
+		#packopt name			"install"
+
+	//----------------------------------------------------------------------------------------------
+	//= 定数定義
+	//----------------------------------------------------------------------------------------------
+		#define DLL_FILE_PATH				"CameloFilter.dll"
+		#define REGIST_PATH					"regsvrex32.exe"
+
+		#enum SCR_MAIN			=0
+
+	//----------------------------------------------------------------------------------------------
+	//= モジュールインクルード / API宣言
+	//----------------------------------------------------------------------------------------------
+		#include "Module/BetterExec.hsp"
+		
+		#include "Module/hspdsc.as"
+		dsc_Init
+
+		#uselib "Shell32.dll"
+		#func IsUserAnAdmin "IsUserAnAdmin"
+
+	//----------------------------------------------------------------------------------------------
+	//= 初期化
+	//----------------------------------------------------------------------------------------------
+		//管理者権限で実行されているか確認
+		IsUserAnAdmin
+		if stat = 0 {
+			Titlebar = "Error"
+			Message = {"権限がありません。
+						インストールには管理者権限が必要です。
+						「管理者として実行」してください。"}
+			dialog Message, 1, Titlebar
+			end
+		}
+
+		gosub *__GetAlreadyFilterInstall
+
+		//メインウィンドウを初期化(一応)
+		screen SCR_MAIN, 1, 1, 2
+
+	//----------------------------------------------------------------------------------------------
+	//= メイン
+	//----------------------------------------------------------------------------------------------
+		if( AlreadyFilterInstall == 1 ){
+			Titlebar = "CameloFilter のインストール"
+			Message = {"CameloFilter は既にインストールされています。
+						上書きしてインストールしますか？"}
+			dialog Message, 2, Titlebar
+		} else {
+			Titlebar = "CameloFilter のインストール"
+			Message = {"CameloFilter をインストールします。
+						よろしいですか？"}
+			dialog Message, 2, Titlebar
+		}
+		//はい をクリックした
+		if( stat == 6 ){
+			Titlebar = "CameloFilter のインストール"
+			Message = {"【注意事項】
+						CameloFilter をインストールした後に、
+						当フォルダを移動などした場合は、再度インストールが必要です。"}
+			dialog Message, 0, Titlebar
+
+			//必要ファイルが存在するか確認
+			FailedFlag = 0
+			exist DLL_FILE_PATH
+			if( strsize == -1 ){
+				Titlebar = "ファイルが見つかりません。"
+				Message = ""+DLL_FILE_PATH+" がみつかりません。"
+				dialog Message, 1, Titlebar
+				FailedFlag = 1
+			}
+			exist REGIST_PATH
+			if( strsize == -1 ){
+				Titlebar = "ファイルが見つかりません。"
+				Message = ""+REGIST_PATH+" がみつかりません。"
+				dialog Message, 1, Titlebar
+				FailedFlag = 1
+			}
+
+			//インストール
+			if( FailedFlag == 0 ){
+				//上書きインストールの場合は一度アンインストール
+				if( AlreadyFilterInstall == 1 ){
+					Execute ""+REGIST_PATH, "/s /u "+DLL_FILE_PATH, EXEC_HIDE
+				}
+				//インストール
+				Execute ""+REGIST_PATH, "/s "+DLL_FILE_PATH, EXEC_HIDE
+				//インストールされたか確認
+				gosub *__GetAlreadyFilterInstall
+				if( AlreadyFilterInstall == 1 ){
+					Titlebar = "CameloFilter のインストール"
+					Message = "インストールが完了しました。"
+					dialog Message, 0, Titlebar
+				} else {
+					Titlebar = "CameloFilter のインストール"
+					Message = "インストールに失敗しました。"
+					dialog Message, 1, Titlebar
+				}
+			} else {
+				Titlebar = "CameloFilter のインストール"
+				Message = "インストールに失敗しました。"
+				dialog Message, 1, Titlebar
+			}
+		} else {
+			Titlebar = "CameloFilter のインストール"
+			Message = "インストールを中断します。"
+			dialog Message, 0, Titlebar
+		}
+
+	//----------------------------------------------------------------------------------------------
+	//= 終了
+	//----------------------------------------------------------------------------------------------
+		end
+
+	//----------------------------------------------------------------------------------------------
+	//= サブルーチン
+	//----------------------------------------------------------------------------------------------
+		//CameloFilterがインストールされているか確認
+		*__GetAlreadyFilterInstall
+			sdim DeviceList, 1024
+			dsc_GetDeviceList DeviceList
+			SearchIndex = instr(DeviceList, 0, "\n"+"CameloFilter"+"\n")
+			if( SearchIndex != -1 ){
+				AlreadyFilterInstall = 1
+			} else {
+				AlreadyFilterInstall = 0
+			}
+		return

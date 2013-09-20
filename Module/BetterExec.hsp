@@ -1,0 +1,23 @@
+//モード定数
+#define EXEC_HIDE				0	//非表示
+#define EXEC_NORMAL_FOCUS		1	//通常サイズ
+#define EXEC_MINIMIZED_FOCUS	2	//最小化
+#define EXEC_MAXIMIZED_FOCUS	3	//最大化
+#define EXEC_NORMAL_NO_FOCUS	4	//通常サイズかつ非フォーカス
+#define EXEC_MINIMIZED_NO_FOCUS	6	//最小化かつ非フォーカス
+
+#define Execute(%1, %2="", %3=1)	_Execute %1, %2, %3
+
+#module _BetterExec_
+//----------------------------------------------------------------------------------------------
+//外部ファイル実行命令
+// Execute "filename", コマンドライン, 実行モード(上記定数を参照)
+// 第1パラメータにコマンドラインを入力しないこと。
+// 第2, 第3パラメータは省略可
+//----------------------------------------------------------------------------------------------
+	#deffunc _Execute str _path, str _cmd, int _mode
+		newcom WshShell, "WScript.Shell"
+		WshShell->"Run" ""+_path+" "+_cmd, _mode, 1
+		delcom WshShell
+	return
+#global

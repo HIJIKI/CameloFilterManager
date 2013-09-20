@@ -1,3 +1,5 @@
 _garbage/
 obj
 hsptmp
+Temp.bat
+*.exe
