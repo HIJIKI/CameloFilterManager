@@ -76,7 +76,7 @@
 
 				//アンインストール
 				if( FailedFlag == 0 ){
-					Execute ""+REGIST_PATH, "/su "+DLL_FILE_PATH, EXEC_HIDE
+					Execute ""+REGIST_PATH, "/s /u "+DLL_FILE_PATH, EXEC_HIDE
 					//アンインストールされたか確認
 					gosub *__GetAlreadyFilterInstall
 					if( AlreadyFilterInstall == 0 ){
